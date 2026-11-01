@@ -86,6 +86,23 @@ describe("getSpendableUtxos", () => {
     expect(result).toHaveLength(1);
     expect(result[0].satoshi).toBe(600_000);
   });
+  it("continues until one individually large enough safe UTXO is found", async () => {
+    const cursors: number[] = [];
+    installBrowserTimerMocks();
+    vi.stubGlobal("fetch", (async (input: RequestInfo | URL) => {
+      const cursor = Number(new URL(String(input)).searchParams.get("cursor"));
+      cursors.push(cursor);
+      return Response.json({
+        chain: "fractal", address: ADDRESS, cursor, nextCursor: cursor + 25, total: 50, scannedCount: 25,
+        utxo: cursor === 0
+          ? [{ ...SAFE_UTXO, txid: "a".repeat(64), satoshi: 1_000 }, { ...SAFE_UTXO, txid: "b".repeat(64), satoshi: 1_000 }]
+          : [{ ...SAFE_UTXO, txid: "c".repeat(64), satoshi: 2_000 }],
+      });
+    }) as typeof fetch);
+    const result = await getSpendableUtxos("FRACTAL_BITCOIN_MAINNET", ADDRESS, 1_650, { collectAll: false, minimumUtxoSats: 1_650 });
+    expect(cursors).toEqual([0, 25]);
+    expect(result.some(utxo => utxo.satoshi >= 1_650)).toBe(true);
+  });
   it("refuse un UTXO sûr répété sur plusieurs pages", async () => {
     installBrowserTimerMocks();
     vi.stubGlobal("fetch", (async (input: RequestInfo | URL) => {
