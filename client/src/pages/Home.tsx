@@ -172,12 +172,12 @@ function DetailPanel({
   const token = rarity.token(record);
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b0d10]/80 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#0b0d10]/80 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onMouseDown={event => event.target === event.currentTarget && onClose()}
       role="presentation"
     >
       <section
-        className="max-h-[min(760px,calc(100vh-2rem))] w-full max-w-5xl overflow-auto border border-[#3b434d] bg-[#12161b] shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
+        className="max-h-[100dvh] min-h-full w-full max-w-5xl overflow-y-auto overscroll-contain border border-[#3b434d] bg-[#12161b] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:max-h-[min(760px,calc(100dvh-2rem))] sm:min-h-0"
         role="dialog"
         aria-modal="true"
         aria-labelledby="detail-title"
@@ -424,19 +424,25 @@ export default function Home() {
   useEffect(() => {
     if (!selected || liveData[selected.id]) return;
     const controller = new AbortController();
+    let active = true;
     setLiveLoading(true);
     setLiveErrors(current => ({ ...current, [selected.id]: "" }));
     fetchLiveInscription(selected.id, controller.signal, "FRACTAL_BITCOIN_MAINNET", true)
-      .then(data =>
-        setLiveData(current => ({ ...current, [selected.id]: data }))
-      )
+      .then(data => {
+        if (active) setLiveData(current => ({ ...current, [selected.id]: data }));
+      })
       .catch((cause: Error) => {
-        if (cause.name !== "AbortError") {
+        if (active && cause.name !== "AbortError") {
           setLiveErrors(current => ({ ...current, [selected.id]: cause.message || "Live UniSat data is temporarily unavailable." }));
         }
       })
-      .finally(() => setLiveLoading(false));
-    return () => controller.abort();
+      .finally(() => {
+        if (active) setLiveLoading(false);
+      });
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [selected, liveData, liveRetry]);
   const typeValues = useMemo(() => values(records, "types"), [records]);
   const abilityValues = useMemo(() => values(records, "abilities"), [records]);
