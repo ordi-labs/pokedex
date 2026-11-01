@@ -53,12 +53,35 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+:root {
+  --app-safe-top: env(safe-area-inset-top, 0px);
+  --app-safe-right: env(safe-area-inset-right, 0px);
+  --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --app-safe-left: env(safe-area-inset-left, 0px);
+}
+html {
+  min-height: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--app-safe-top) + 5rem);
+  background-color: #0b0d10;
+  -webkit-text-size-adjust: 100%;
+}
 body {
   @apply bg-background text-foreground;
   font-family: "IBM Plex Sans", sans-serif;
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  overflow-x: clip;
   background-image: linear-gradient(rgba(142, 160, 180, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(142, 160, 180, 0.045) 1px, transparent 1px);
   background-size: 32px 32px;
+}
+#root {
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
 }
 button, a, input, select { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible { outline: 2px solid #d99a54; outline-offset: 3px; }
@@ -167,11 +190,16 @@ tbody tr:hover { background-color: rgba(215, 183, 123, 0.045); }
   position: relative;
   isolation: isolate;
   overflow: clip;
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  padding: var(--app-safe-top) var(--app-safe-right) var(--app-safe-bottom) var(--app-safe-left);
   background:
     radial-gradient(ellipse at 8% 0%, rgba(215, 183, 123, 0.075), transparent 34%),
     radial-gradient(ellipse at 96% 14%, rgba(89, 112, 145, 0.075), transparent 30%),
     linear-gradient(180deg, #0d1015 0%, #090b0f 68%, #0b0d10 100%) !important;
 }
+.premium-site-shell > nav { top: var(--app-safe-top); }
 .premium-site-shell::before {
   content: "";
   position: absolute;
@@ -189,6 +217,9 @@ tbody tr:hover { background-color: rgba(215, 183, 123, 0.045); }
   outline-offset: 3px;
 }
 .premium-site-shell img { backface-visibility: hidden; }
+@media (max-width: 767px) {
+  body { background-attachment: scroll; }
+}
 @media (prefers-reduced-motion: reduce) {
   .premium-site-shell :is(article, img, a, button) { transition: none !important; }
 }
