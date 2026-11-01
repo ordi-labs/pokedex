@@ -157,6 +157,8 @@ function DetailPanel({
   rarity,
   live,
   liveLoading,
+  liveError,
+  onRetryLive,
 }: {
   record: PokemonRecord;
   onClose: () => void;
@@ -164,6 +166,8 @@ function DetailPanel({
   rarity: ReturnType<typeof createRarityIndex>;
   live: LiveInscription | null;
   liveLoading: boolean;
+  liveError?: string;
+  onRetryLive?: () => void;
 }) {
   const token = rarity.token(record);
   return (
@@ -223,7 +227,7 @@ function DetailPanel({
                 {record.id}
               </a>
             </div>
-            <LiveDataBlock live={live} loading={liveLoading} />
+            <LiveDataBlock live={live} loading={liveLoading} error={liveError} onRetry={onRetryLive} />
             <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {record.attributes.map(item => {
                 const rarityValue = rarity.trait(record, item);
@@ -292,6 +296,8 @@ export default function Home() {
   const [selected, setSelected] = useState<PokemonRecord | null>(null);
   const [liveData, setLiveData] = useState<Record<string, LiveInscription>>({});
   const [liveLoading, setLiveLoading] = useState(false);
+  const [liveErrors, setLiveErrors] = useState<Record<string, string>>({});
+  const [liveRetry, setLiveRetry] = useState(0);
   const [market, setMarket] = useState<LiveMarket | null>(null);
   const [marketLoading, setMarketLoading] = useState(true);
   const [marketError, setMarketError] = useState("");
@@ -306,7 +312,7 @@ export default function Home() {
   const [allListingsError, setAllListingsError] = useState("");
   const galleryRef = useRef<HTMLElement>(null);
   const marketRef = useRef<HTMLDivElement>(null);
-  const [marketReady, setMarketReady] = useState(false);
+  const [marketReady] = useState(true);
   const [snapshotDate, setSnapshotDate] = useState("");
   const [favorites, setFavorites] = useState<Set<string>>(() => {
     try {
@@ -358,13 +364,6 @@ export default function Home() {
   useEffect(() => {
     try { localStorage.setItem("catalog-favorites", JSON.stringify(Array.from(favorites))); } catch { /* storage may be unavailable */ }
   }, [favorites]);
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) { setMarketReady(true); observer.disconnect(); }
-    }, { rootMargin: "480px" });
-    if (marketRef.current) observer.observe(marketRef.current);
-    return () => observer.disconnect();
-  }, []);
   useEffect(() => {
     const params = new URLSearchParams();
     if (query) params.set("q", query);
@@ -426,14 +425,19 @@ export default function Home() {
     if (!selected || liveData[selected.id]) return;
     const controller = new AbortController();
     setLiveLoading(true);
-    fetchLiveInscription(selected.id, controller.signal)
+    setLiveErrors(current => ({ ...current, [selected.id]: "" }));
+    fetchLiveInscription(selected.id, controller.signal, "FRACTAL_BITCOIN_MAINNET", true)
       .then(data =>
         setLiveData(current => ({ ...current, [selected.id]: data }))
       )
-      .catch(() => undefined)
+      .catch((cause: Error) => {
+        if (cause.name !== "AbortError") {
+          setLiveErrors(current => ({ ...current, [selected.id]: cause.message || "Live UniSat data is temporarily unavailable." }));
+        }
+      })
       .finally(() => setLiveLoading(false));
     return () => controller.abort();
-  }, [selected, liveData]);
+  }, [selected, liveData, liveRetry]);
   const typeValues = useMemo(() => values(records, "types"), [records]);
   const abilityValues = useMemo(() => values(records, "abilities"), [records]);
   const filtered = useMemo(() => {
@@ -884,6 +888,16 @@ export default function Home() {
                                   detail={`rank ${token.rank}`}
                                 />
                               </div>
+                              <div className="mt-2 min-h-5">
+                                {allListingsLoaded ? (
+                                  <span className={`inline-flex items-center gap-1 border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.08em] ${listedTokenIds.has(record.tokenId) ? "border-[#70c7a0]/60 bg-[#70c7a0]/10 text-[#70c7a0]" : "border-[#4a5562] bg-[#4a5562]/15 text-[#9ea7b3]"}`}>
+                                    <span aria-hidden="true">{listedTokenIds.has(record.tokenId) ? "●" : "○"}</span>
+                                    {listedTokenIds.has(record.tokenId) ? "Live listing" : "Not listed"}
+                                  </span>
+                                ) : (
+                                  <span className={`font-mono text-[9px] uppercase tracking-[0.08em] ${allListingsError ? "text-[#e08b7d]" : "text-[#718092]"}`}>{allListingsError ? "Live status unavailable" : "Live status loading…"}</span>
+                                )}
+                              </div>
                               <p className="mt-2 truncate font-mono text-[9px] text-[#718092]">
                                 {shortId(record.id)}
                               </p>
@@ -1147,6 +1161,15 @@ export default function Home() {
           rarity={rarity}
           live={liveData[selected.id] ?? null}
           liveLoading={liveLoading}
+          liveError={liveErrors[selected.id]}
+          onRetryLive={() => {
+            setLiveData(current => {
+              const next = { ...current };
+              delete next[selected.id];
+              return next;
+            });
+            setLiveRetry(value => value + 1);
+          }}
         />
       )}
     </div>

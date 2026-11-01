@@ -22,10 +22,12 @@ export type LiveMarket = {
   refreshedAt: string;
 };
 
-export const MARKET_DATA_URL = import.meta.env.VITE_LIVE_DATA_URL?.replace(/\/api\/live-inscription$/, "") || "https://fractal-ordinal-live.servostar23.workers.dev";
+const MARKET_DATA_DEFAULT = "https://fractal-ordinal-live.servostar23.workers.dev";
+const MARKET_DATA_CONFIG = import.meta.env.VITE_LIVE_DATA_URL?.trim().replace(/\/+$/, "") || MARKET_DATA_DEFAULT;
+export const MARKET_DATA_URL = MARKET_DATA_CONFIG.replace(/\/api\/(?:market|live-inscription)$/i, "");
 
 export async function fetchLiveMarket(collectionId: string, start = 0, limit = 20, signal?: AbortSignal): Promise<LiveMarket> {
-  const response = await fetch(`${MARKET_DATA_URL}/api/market?collectionId=${encodeURIComponent(collectionId)}&start=${start}&limit=${limit}`, { signal, headers: { Accept: "application/json" } });
+  const response = await fetch(`${MARKET_DATA_URL}/api/market?collectionId=${encodeURIComponent(collectionId)}&start=${start}&limit=${limit}`, { signal, cache: "no-store", headers: { Accept: "application/json" } });
   if (!response.ok) throw new Error(`Live market request failed (${response.status}).`);
   return (await response.json()) as LiveMarket;
 }
