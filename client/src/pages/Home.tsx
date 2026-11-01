@@ -509,7 +509,7 @@ export default function Home() {
   return (
     <div className="premium-site-shell min-h-screen bg-[#0b0d10] text-[#f3efe5]">
       <header className="border-b border-[#2c323a] bg-[#0b0d10]/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
+        <div className="mx-auto flex w-full max-w-[1440px] flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 sm:flex-nowrap sm:px-8 sm:py-4 lg:px-12">
           <a
             href="#top"
             className="group flex items-center gap-3"
@@ -530,7 +530,7 @@ export default function Home() {
               </span>
             </span>
           </a>
-          <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[#9ea7b3] sm:gap-6">
+          <div className="flex max-w-full flex-wrap items-center justify-end gap-2 font-mono text-[9px] uppercase tracking-[0.1em] text-[#9ea7b3] sm:flex-nowrap sm:gap-6 sm:text-[10px] sm:tracking-[0.14em]">
             <DonateButton compact />
             <OrdiWallet site="pokedex" />
             <span className="hidden sm:inline">Fractal Bitcoin</span>

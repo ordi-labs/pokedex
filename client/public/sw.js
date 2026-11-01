@@ -1,4 +1,4 @@
-const CACHE_NAME = "fractal-pokedex-v3";
+const CACHE_NAME = "fractal-pokedex-v4";
 const APP_SHELL = ["./", "./site.webmanifest", "./assets/brand/fractal-ordinals-icon-192.png", "./assets/brand/fractal-ordinals-icon-512.png"];
 
 self.addEventListener("install", (event) => {

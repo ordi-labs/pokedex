@@ -7,7 +7,7 @@
   "scope": "./",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "background_color": "#0b0d10",
   "theme_color": "#0b0d10",
   "categories": ["art", "entertainment", "finance"],
