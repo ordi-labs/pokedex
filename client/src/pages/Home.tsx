@@ -297,7 +297,7 @@ export default function Home() {
   const [liveData, setLiveData] = useState<Record<string, LiveInscription>>({});
   const [liveLoading, setLiveLoading] = useState(false);
   const [liveErrors, setLiveErrors] = useState<Record<string, string>>({});
-  const [liveRetry, setLiveRetry] = useState(0);
+  const [liveRetry, setLiveRetry] = useState<Record<string, number>>({});
   const [market, setMarket] = useState<LiveMarket | null>(null);
   const [marketLoading, setMarketLoading] = useState(true);
   const [marketError, setMarketError] = useState("");
@@ -427,7 +427,7 @@ export default function Home() {
     let active = true;
     setLiveLoading(true);
     setLiveErrors(current => ({ ...current, [selected.id]: "" }));
-    fetchLiveInscription(selected.id, controller.signal, "FRACTAL_BITCOIN_MAINNET", true)
+    fetchLiveInscription(selected.id, controller.signal, "FRACTAL_BITCOIN_MAINNET", Boolean(liveRetry[selected.id]))
       .then(data => {
         if (active) setLiveData(current => ({ ...current, [selected.id]: data }));
       })
@@ -1174,7 +1174,7 @@ export default function Home() {
               delete next[selected.id];
               return next;
             });
-            setLiveRetry(value => value + 1);
+            setLiveRetry(current => ({ ...current, [selected.id]: (current[selected.id] ?? 0) + 1 }));
           }}
         />
       )}
