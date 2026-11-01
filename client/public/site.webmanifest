@@ -13,10 +13,10 @@
   "categories": ["art", "entertainment", "finance"],
   "icons": [
     {
-      "src": "./assets/brand/pokedex-pokeball-icon.svg?v=3",
+      "src": "./assets/brand/pokedex-logo.png",
       "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
