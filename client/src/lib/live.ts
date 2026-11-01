@@ -18,9 +18,30 @@ export async function fetchLiveInscription(
   url.searchParams.set("inscriptionId", inscriptionId);
   url.searchParams.set("chain", chain);
   if (refresh) url.searchParams.set("refresh", "1");
-  const response = await fetch(url.toString(), { signal, cache: "no-store", headers: { Accept: "application/json" } });
+  let response = await fetch(url.toString(), { signal, cache: "no-store", headers: { Accept: "application/json" } });
   if (!response.ok) throw new Error(`Live UniSat request failed (${response.status}).`);
-  const payload = (await response.json()) as Partial<LiveInscription>;
+  const readPayload = async (result: Response): Promise<Partial<LiveInscription>> => {
+    const body = await result.text();
+    try {
+      const payload: unknown = JSON.parse(body);
+      if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error();
+      return payload as Partial<LiveInscription>;
+    } catch {
+      const contentType = result.headers.get("content-type") || "unknown content type";
+      throw new Error(`Live UniSat returned invalid JSON (${result.status}, ${contentType}).`);
+    }
+  };
+  let payload: Partial<LiveInscription>;
+  try {
+    payload = await readPayload(response);
+  } catch (error) {
+    if (refresh || signal?.aborted) throw error;
+    const retryUrl = new URL(url.toString());
+    retryUrl.searchParams.set("refresh", "1");
+    response = await fetch(retryUrl.toString(), { signal, cache: "no-store", headers: { Accept: "application/json" } });
+    if (!response.ok) throw new Error(`Live UniSat request failed (${response.status}).`);
+    payload = await readPayload(response);
+  }
   return {
     inscriptionId: payload.inscriptionId || inscriptionId,
     owner: payload.owner ?? null,
