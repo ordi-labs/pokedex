@@ -172,12 +172,12 @@ function DetailPanel({
   const token = rarity.token(record);
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#0b0d10]/80 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      className="premium-modal-viewport fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#0b0d10]/80 backdrop-blur-sm"
       onMouseDown={event => event.target === event.currentTarget && onClose()}
       role="presentation"
     >
       <section
-        className="max-h-[100dvh] min-h-full w-full max-w-5xl overflow-y-auto overscroll-contain border border-[#3b434d] bg-[#12161b] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:max-h-[min(760px,calc(100dvh-2rem))] sm:min-h-0"
+        className="premium-modal-panel w-full max-w-5xl overflow-y-auto overscroll-contain border bg-[#12161b]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="detail-title"
