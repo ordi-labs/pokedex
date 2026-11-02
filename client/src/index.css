@@ -217,6 +217,32 @@ tbody tr:hover { background-color: rgba(215, 183, 123, 0.045); }
   outline-offset: 3px;
 }
 .premium-site-shell img { backface-visibility: hidden; }
+.premium-modal-viewport {
+  padding: max(0.75rem, var(--app-safe-top)) max(0.75rem, var(--app-safe-right)) max(0.75rem, var(--app-safe-bottom)) max(0.75rem, var(--app-safe-left));
+}
+.premium-modal-panel {
+  width: min(100%, 72rem);
+  max-height: calc(100dvh - max(1.5rem, var(--app-safe-top) + var(--app-safe-bottom)));
+  min-height: 0;
+  border-radius: 0.85rem;
+  border-color: rgba(215, 183, 123, 0.34);
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.58), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+.wallet-modal-panel {
+  height: min(900px, calc(100dvh - max(1.5rem, var(--app-safe-top) + var(--app-safe-bottom))));
+  max-height: calc(100dvh - max(1.5rem, var(--app-safe-top) + var(--app-safe-bottom)));
+}
+@media (max-width: 767px) {
+  .premium-modal-viewport { align-items: flex-start; }
+  .premium-modal-panel {
+    max-height: calc(100dvh - max(1rem, var(--app-safe-top) + var(--app-safe-bottom)));
+    border-radius: 0.7rem;
+  }
+  .wallet-modal-panel {
+    height: calc(100dvh - max(1rem, var(--app-safe-top) + var(--app-safe-bottom)));
+    max-height: calc(100dvh - max(1rem, var(--app-safe-top) + var(--app-safe-bottom)));
+  }
+}
 @media (max-width: 767px) {
   body { background-attachment: scroll; }
 }
