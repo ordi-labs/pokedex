@@ -175,7 +175,6 @@ type AddressUtxoInventoryPage = {
   chain?: string; address?: string; cursor?: number; nextCursor?: number; total?: number; totalKnown?: boolean; hasMore?: boolean; scannedCount?: number; utxo?: unknown[];
 };
 const ADDRESS_UTXO_PAGE_SIZE = 25;
-const MAX_ADDRESS_UTXO_PAGES = 40_000;
 const MAX_ADDRESS_UTXO_REQUESTS_PER_MINUTE = 120;
 const ADDRESS_UTXO_REQUEST_WINDOW_MS = 60_000;
 
@@ -192,7 +191,8 @@ export async function scanAddressUtxoInventory(network: string, address: string,
   let requestsInWindow = 0;
   // Detect repeated outpoints across page boundaries, not only within one page.
   const seenInventoryOutpoints = new Set<string>();
-  for (let pageNumber = 0; pageNumber < MAX_ADDRESS_UTXO_PAGES; pageNumber += 1) {
+  // Continue until the Worker reports hasMore=false; no arbitrary page-count cap.
+  for (;;) {
     if (requestsInWindow >= MAX_ADDRESS_UTXO_REQUESTS_PER_MINUTE) {
       const waitMs = Math.max(0, requestWindowStartedAt + ADDRESS_UTXO_REQUEST_WINDOW_MS - Date.now());
       if (waitMs > 0) await new Promise<void>(resolve => window.setTimeout(resolve, waitMs));
@@ -282,8 +282,6 @@ export type WorkerSafeUtxoAttestation = {
 type WorkerSafeUtxoConfirmationResponse = Omit<WorkerSafeUtxoAttestation, "sufficient"> & { sufficient: boolean };
 
 const SPENDABLE_UTXO_PAGE_SIZE = 25;
-// The Worker accepts cursors through 1,000,000; keep scanning until the reported total.
-const MAX_SPENDABLE_UTXO_PAGES = 40_000;
 const MAX_SPENDABLE_REQUESTS_PER_MINUTE = 120;
 const SPENDABLE_REQUEST_WINDOW_MS = 60_000;
 const UTXO_REJECTION_KEYS = [
@@ -356,7 +354,8 @@ export async function getSpendableUtxos(network: string, address: string, minimu
   };
   let requestWindowStartedAt = Date.now();
   let requestsInWindow = 0;
-  for (let pageNumber = 0; pageNumber < MAX_SPENDABLE_UTXO_PAGES; pageNumber += 1) {
+  // Continue until the Worker reports hasMore=false; no arbitrary page-count cap.
+  for (;;) {
     if (requestsInWindow >= MAX_SPENDABLE_REQUESTS_PER_MINUTE) {
       const waitMs = Math.max(0, requestWindowStartedAt + SPENDABLE_REQUEST_WINDOW_MS - Date.now());
       if (waitMs > 0) await new Promise<void>(resolve => window.setTimeout(resolve, waitMs));
@@ -466,7 +465,7 @@ export async function getSpendableUtxos(network: string, address: string, minimu
   // An incomplete scan could omit fee UTXOs and misstate the address's safe balance.
   if (collectAll && !scanComplete) {
     const scannedLabel = sourceTotal === null ? String(scannedCount) : `${scannedCount}/${sourceTotal}`;
-    throw new Error(`Safe UTXO scan is incomplete: verified ${scannedLabel} address outputs (Worker cursor limit ${MAX_SPENDABLE_UTXO_PAGES * SPENDABLE_UTXO_PAGE_SIZE}). No transaction was signed or broadcast.`);
+    throw new Error(`Safe UTXO scan is incomplete: verified ${scannedLabel} address outputs. No transaction was signed or broadcast.`);
   }
   if (!options.allowInsufficientSafeBalance && safeSats < minimumSats) {
     const scannedLabel = sourceTotal === null ? String(scannedCount) : `${scannedCount}/${sourceTotal}`;
@@ -481,7 +480,7 @@ export async function getSpendableUtxos(network: string, address: string, minimu
       .map(key => `${UTXO_REJECTION_LABELS[key]}: ${rejectionSatsTotals[key].toLocaleString("en-US")} sats`)
       .join("; ");
     const rejectedValueHint = rejectedValueSummary ? ` Valeur des sorties rejetées par motif: ${rejectedValueSummary}.` : "";
-    throw new InsufficientSafeUtxosError(`UniSat/Worker verified only ${safeSats.toLocaleString("en-US")} sats across ${collected.length} safe UTXOs after scanning ${scannedLabel} UniSat available outputs (Worker cursor limit ${MAX_SPENDABLE_UTXO_PAGES * SPENDABLE_UTXO_PAGE_SIZE}; protocol-asset outputs are excluded from this fee-safe scan). Minimum required: ${minimumSats.toLocaleString("en-US")} sats. No payment was started.${diagnosticHint}${rejectedValueHint}${zeroSafeBalanceHint}`);
+    throw new InsufficientSafeUtxosError(`UniSat/Worker verified only ${safeSats.toLocaleString("en-US")} sats across ${collected.length} safe UTXOs after scanning ${scannedLabel} UniSat available outputs (protocol-asset outputs are excluded from this fee-safe scan). Minimum required: ${minimumSats.toLocaleString("en-US")} sats. No payment was started.${diagnosticHint}${rejectedValueHint}${zeroSafeBalanceHint}`);
   }
   return [...collected].sort(compareSpendableUtxos);
 }
